@@ -1,0 +1,194 @@
+using FluentValidation;
+using MediatR;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using SchoolProject.Core.Behaviors;
+using SchoolProject.Core.Features.ApplicationUser.Commands.Handlers;
+using SchoolProject.Core.Features.ApplicationUser.Commands.Validators;
+using SchoolProject.Core.Features.Departments.Queries.Handlers;
+using SchoolProject.Core.Features.Students.Commands.Handlers;
+using SchoolProject.Core.Features.Students.Commands.Models;
+using SchoolProject.Core.Features.Students.Commands.Validators;
+using SchoolProject.Core.Features.Students.Queries.Handlers;
+using SchoolProject.Core.Features.Subjects.Command.Handlers;
+using SchoolProject.Core.Features.Subjects.Command.Validators;
+using SchoolProject.Core.Features.Subjects.Query.Handlers;
+using SchoolProject.Core.Mapping.Departments;
+using SchoolProject.Core.Mapping.Students;
+using SchoolProject.Core.Mapping.Subjects;
+using SchoolProject.Core.Middlewares;
+using SchoolProject.Data.Entities;
+using SchoolProject.Data.Entities.Identity;
+using SchoolProject.Infrastructure.Data;
+using SchoolProject.Infrastructure.Repos;
+using SchoolProject.Infrastructure.Repos.Contract;
+using SchoolProject.Service.Services;
+using SchoolProject.Service.Services.Contract;
+using System.Globalization;
+using System.Reflection;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+//Connection Sql
+builder.Services.AddDbContext<SchoolDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")); 
+});
+
+#region AddIdentity
+
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+{
+    // Password settings.
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequiredUniqueChars = 1;
+    
+    // Lockout settings.
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    // User settings.
+    options.User.AllowedUserNameCharacters =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+    options.User.RequireUniqueEmail = false;
+
+}).AddEntityFrameworkStores<SchoolDbContext>()
+.AddDefaultTokenProviders();
+
+#endregion
+#region DI
+//builder.Services.AddScoped(typeof(IGenericRepos<>), typeof(GenericRepos<>));
+//builder.Services.AddScoped(typeof(IGenericRepos<Subject>), typeof(GenericRepos<Subject>));
+builder.Services.AddScoped<IStudentRepo, StudentRepo>();
+builder.Services.AddScoped<ISubjectRepo, SubjectRepo>();
+builder.Services.AddScoped<IDepartmentRepo, DepartmentRepo>();
+builder.Services.AddScoped<IInstructorRepo, InstructorRepo>();
+
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<ISubjectService, SubjectService>();
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+
+builder.Services.AddAutoMapper(m => m.AddProfile(new StudentProfile()));
+builder.Services.AddAutoMapper(m => m.AddProfile(new SubjectProfile()));
+builder.Services.AddAutoMapper(m => m.AddProfile(new DepartmentProfile()));
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(
+        typeof(StudentsQueryHandler).Assembly); 
+    cfg.RegisterServicesFromAssembly(
+        typeof(StudentsCommandHandler).Assembly); 
+    cfg.RegisterServicesFromAssembly(
+        typeof(SubjectsQueryHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(
+        typeof(SubjectsCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(
+        typeof(DepartmentQueryHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(
+        typeof(AppUsersCommandHandler).Assembly);
+});
+//builder.Services.AddMediatR(c=>c.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
+// DI For Validations
+//builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+//builder.Services.AddScoped<IValidator<AddStudentCommand>, AddStudentValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<AddStudentValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<EditStudentValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<AddSubjectValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateSubjectValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<AddAppUserValidator>();
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+#endregion
+
+#region Localization
+builder.Services.AddLocalization(opt =>
+{
+    opt.ResourcesPath = "";
+});
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    List<CultureInfo> SupportedCulture = new List<CultureInfo>()
+    {
+        new CultureInfo("en-US"),
+        new CultureInfo("de-DE"),
+        new CultureInfo("fr-FR"),
+        new CultureInfo("ar-EG")
+    };
+    options.DefaultRequestCulture=new RequestCulture("en-US");
+    options.SupportedCultures=SupportedCulture;
+    options.SupportedUICultures=SupportedCulture;
+});
+#endregion
+
+#region Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Policy1",
+                          policy =>
+                          {
+                              policy.WithOrigins("http://example.com",
+                                                  "http://www.contoso.com")
+                                                  .AllowAnyHeader()
+                                                  .AllowAnyMethod();
+                          });
+});
+
+#endregion
+
+
+
+var app = builder.Build();
+
+using var scope=app.Services.CreateScope();
+var service= scope.ServiceProvider;
+var dbContext=service.GetRequiredService<SchoolDbContext>();
+var LoggerFactory = service.GetRequiredService<ILoggerFactory>();
+
+try
+{
+    await dbContext.Database.MigrateAsync();
+}
+catch(Exception ex)
+{
+    var logger = LoggerFactory.CreateLogger<Program>();
+    logger.LogError(ex, "An Error Occurred During Applying Migrations Database");
+}
+
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+#region Localization Middleware
+var options=app.Services.GetService<IOptions<RequestLocalizationOptions>>();
+app.UseRequestLocalization(options.Value);
+
+#endregion
+app.UseMiddleware<ErrorHandlerMiddleware>();
+
+app.UseHttpsRedirection();
+
+app.UseCors("Policy1");
+
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
