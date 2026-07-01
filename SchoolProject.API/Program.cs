@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using SchoolProject.Core.Behaviors;
 using SchoolProject.Core.Features.ApplicationUser.Commands.Handlers;
 using SchoolProject.Core.Features.ApplicationUser.Commands.Validators;
+using SchoolProject.Core.Features.ApplicationUser.Queries.Handlers;
 using SchoolProject.Core.Features.Departments.Queries.Handlers;
 using SchoolProject.Core.Features.Students.Commands.Handlers;
 using SchoolProject.Core.Features.Students.Commands.Models;
@@ -16,6 +17,7 @@ using SchoolProject.Core.Features.Students.Queries.Handlers;
 using SchoolProject.Core.Features.Subjects.Command.Handlers;
 using SchoolProject.Core.Features.Subjects.Command.Validators;
 using SchoolProject.Core.Features.Subjects.Query.Handlers;
+using SchoolProject.Core.Mapping.ApplicationUser;
 using SchoolProject.Core.Mapping.Departments;
 using SchoolProject.Core.Mapping.Students;
 using SchoolProject.Core.Mapping.Subjects;
@@ -86,6 +88,7 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddAutoMapper(m => m.AddProfile(new StudentProfile()));
 builder.Services.AddAutoMapper(m => m.AddProfile(new SubjectProfile()));
 builder.Services.AddAutoMapper(m => m.AddProfile(new DepartmentProfile()));
+builder.Services.AddAutoMapper(m => m.AddProfile(new AppUserProfile()));
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(
@@ -100,6 +103,8 @@ builder.Services.AddMediatR(cfg =>
         typeof(DepartmentQueryHandler).Assembly);
     cfg.RegisterServicesFromAssembly(
         typeof(AppUsersCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(
+        typeof(AppUsersQueryHandler).Assembly);
 });
 //builder.Services.AddMediatR(c=>c.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
 // DI For Validations

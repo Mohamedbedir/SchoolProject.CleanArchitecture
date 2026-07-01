@@ -22,8 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\ApplicationUser\Queries\" />
     <Folder Include="Features\Departments\Commands\" />
+    <Folder Include="Mapping\ApplicationUser\CommandMapping\" />
     <Folder Include="Mapping\Departments\CommandMapping\" />
   </ItemGroup>
 
