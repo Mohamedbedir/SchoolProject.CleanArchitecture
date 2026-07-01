@@ -44,6 +44,7 @@ namespace SchoolProject.Data.AppMetaData
         {
             public const string Prefix = Rule+ "User";
             public const string List = Prefix+"/List";
+            public const string Paginated = Prefix + "/Paginated";
             public const string ById = Prefix + "/ById"+ "/{id}";
             public const string Create = Prefix + "/Create";
             public const string Update = Prefix + "/Update";
