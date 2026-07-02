@@ -2,8 +2,6 @@
 using Microsoft.Extensions.Localization;
 using SchoolProject.Core.Features.ApplicationUser.Commands.Models;
 using SchoolProject.Core.Localization;
-using SchoolProject.Service.Services;
-using SchoolProject.Service.Services.Contract;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace SchoolProject.Core.Features.ApplicationUser.Commands.Validators
 {
-    public class AddAppUserValidator:AbstractValidator<AddAppUserCommand>
+    public class EditAppUserValidator : AbstractValidator<EditAppUserCommand>
     {
         private readonly IStringLocalizer<SharedResources> localizer;
 
-        public AddAppUserValidator(IStringLocalizer<SharedResources> localizer)
+        public EditAppUserValidator(IStringLocalizer<SharedResources> localizer)
         {
-           
+
             this.localizer = localizer;
             ApplyValidationRules();
             ApplyCustomValidationRules();
@@ -35,29 +33,16 @@ namespace SchoolProject.Core.Features.ApplicationUser.Commands.Validators
                 //.NotNull().WithMessage("Name Mustn't Be Null")
                 .EmailAddress();
 
-            //RuleFor(s => s.Password)
-            //    .NotEmpty().WithMessage($"{localizer[SharedResourcesKeys.Empty]}")
-            //    //.NotNull().WithMessage("Name Mustn't Be Null")
-            //    .MinimumLength(8).WithMessage(string.Format(localizer["MinLength"], 8, localizer["Chars"]));
-            RuleFor(x => x.Password).NotEmpty().WithMessage($"{localizer[SharedResourcesKeys.Empty]}")
-                .MinimumLength(8)
-                .Matches("[A-Z]").WithMessage(localizer[SharedResourcesKeys.uppercase])
-                .Matches("[a-z]").WithMessage(localizer[SharedResourcesKeys.lowercase])
-                .Matches("[0-9]").WithMessage(localizer[SharedResourcesKeys.digit])
-                .Matches("[^a-zA-Z0-9]").WithMessage(localizer[SharedResourcesKeys.specialchar]);
 
-            RuleFor(s => s.ConfirmPassword)
-               .NotEmpty().WithMessage($"{localizer[SharedResourcesKeys.Empty]}")
-               .Equal(p=>p.Password).WithMessage($"{localizer[SharedResourcesKeys.PCNotEqual]}")
-               ;
 
+            //RuleFor(x => x.Phone)
+            //    .Cascade(CascadeMode.Stop)
+            //    .NotEmpty().WithMessage(localizer[SharedResourcesKeys.Empty])
+            //    .Matches(@"^01[0125][0-9]{8}$").WithMessage(localizer["Invalid"]);
             RuleFor(x => x.Phone)
                 .Matches(@"^01[0125][0-9]{8}$").WithMessage(localizer["Invalid"])
                 .When(x => !string.IsNullOrWhiteSpace(x.Phone));
-            //RuleFor(x => x.Phone)
-            //    //.Cascade(CascadeMode.Stop)
-            //    //.NotEmpty().WithMessage(localizer[SharedResourcesKeys.Empty])
-            //    .Matches(@"^01[0125][0-9]{8}$").WithMessage(localizer["Invalid"]);
+           
 
         }
         public void ApplyCustomValidationRules()

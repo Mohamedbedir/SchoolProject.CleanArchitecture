@@ -180,4 +180,37 @@
   <data name="EmailExist" xml:space="preserve">
     <value>Email Alredy Used</value>
   </data>
+  <data name="Invalid" xml:space="preserve">
+    <value>Invalid</value>
+  </data>
+  <data name="FailedDelete" xml:space="preserve">
+    <value>Operation of Delete Is Failed</value>
+  </data>
+  <data name="FailedUpdate" xml:space="preserve">
+    <value>Operation of Delete Is Failed</value>
+  </data>
+  <data name="uppercase" xml:space="preserve">
+    <value>Must contain uppercase letter.</value>
+  </data>
+  <data name="lowercase" xml:space="preserve">
+    <value>Must contain lowercase letter.</value>
+  </data>
+  <data name="digit" xml:space="preserve">
+    <value>Must contain digit.</value>
+  </data>
+  <data name="specialchar" xml:space="preserve">
+    <value>Must contain special character.</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>ConfirmPassword</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="ChangePass" xml:space="preserve">
+    <value>Change Password Done Successfully</value>
+  </data>
 </root>

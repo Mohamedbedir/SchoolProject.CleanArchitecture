@@ -41,12 +41,22 @@ namespace SchoolProject.Core.Features.Students.Commands.Validators
                 //.NotNull().WithMessage("Name Mustn't Be Null")
                 .MaximumLength(100).WithMessage(string.Format(localizer["MaxLength"], 100, localizer["Chars"]));
 
-            RuleFor(s => s.Phone)
-                .NotEmpty().WithMessage($"{localizer[SharedResourcesKeys.Empty]}")
-                //.NotNull().WithMessage("Name Mustn't Be Null")
-                .Length(11).WithMessage(string.Format(localizer["Length"], 11, localizer["Num"]))
-                ;
+            //RuleFor(s => s.Phone)
+            //    .NotEmpty().WithMessage($"{localizer[SharedResourcesKeys.Empty]}")
+            //    //.NotNull().WithMessage("Name Mustn't Be Null")
+            //    .Length(11).WithMessage(string.Format(localizer["Length"], 11, localizer["Num"]))
+            //    ;
+            RuleFor(x => x.Phone).Matches(@"^01[0125][0-9]{8}$").WithMessage(localizer["Invalid"]);
 
+            RuleFor(x => x.Age).InclusiveBetween(18, 30);
+
+            //RuleFor(x => x.Price).GreaterThan(0);
+            //RuleFor(x => x.Quantity).GreaterThanOrEqualTo(1);
+            //RuleFor(x => x.Discount).LessThan(100);
+            //RuleFor(x => x.Score).LessThanOrEqualTo(100);
+
+            //RuleFor(x => x.Price)
+            //    .PrecisionScale(10, 2, true).WithMessage("Price must have up to 10 digits in total and 2 decimal places.");
 
             RuleFor(s => s.DepartmentId)
                .NotEmpty().WithMessage($"{localizer[SharedResourcesKeys.Empty]}");

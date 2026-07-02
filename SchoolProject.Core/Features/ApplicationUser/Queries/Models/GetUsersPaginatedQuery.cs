@@ -14,5 +14,6 @@ namespace SchoolProject.Core.Features.ApplicationUser.Queries.Models
         public string? FullName {  get; set; }
         public int PageNumber {  get; set; }
         public int PageSize { get; set; }
+
     }
 }

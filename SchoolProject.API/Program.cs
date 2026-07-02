@@ -115,6 +115,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<EditStudentValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AddSubjectValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateSubjectValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AddAppUserValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<EditAppUserValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ChangeUserPasswordValidator>();
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 #endregion
