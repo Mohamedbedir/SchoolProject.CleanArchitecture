@@ -52,6 +52,7 @@ namespace SchoolProject.Core.Features.ApplicationUser.Queries.Handlers
                 Email = u.Email,
                 UserName = u.UserName,
                 FullName = u.FullName,
+                Phone=u.PhoneNumber,
                 Address = u.Address,
                 Country = u.Country,
             }).ToPaginatedListAsync(request.PageNumber, request.PageSize);

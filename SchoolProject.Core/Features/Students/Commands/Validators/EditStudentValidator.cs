@@ -40,12 +40,17 @@ namespace SchoolProject.Core.Features.Students.Commands.Validators
                 //.NotEmpty().WithMessage("{PropertyName} Mustn't Be Empty")
                 //.NotNull().WithMessage("Name Mustn't Be Null")
                 .MaximumLength(100).WithMessage(string.Format(localizer["MaxLength"], 100, localizer["Chars"]));
-            RuleFor(s => s.Phone)
-                .NotEmpty().WithMessage($"{localizer[SharedResourcesKeys.Empty]}")
-                //.NotNull().WithMessage("Name Mustn't Be Null")
-                .Length(11).WithMessage(string.Format(localizer["Length"], 11, localizer["Num"]));
+
+            RuleFor(x => x.Phone).Matches(@"^01[0125][0-9]{8}$").WithMessage(localizer["Invalid"]);
+
+            RuleFor(x => x.Age).InclusiveBetween(18, 30);
+
             RuleFor(s => s.DepartmentId)
              .NotEmpty().WithMessage($"{localizer[SharedResourcesKeys.Empty]}");
+
+
+
+
         }
         public void ApplyCustomValidationRules()
         {

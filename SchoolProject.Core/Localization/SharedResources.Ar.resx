@@ -180,4 +180,37 @@
   <data name="EmailExist" xml:space="preserve">
     <value>الاميل مستخدم بالفعل</value>
   </data>
+  <data name="Invalid" xml:space="preserve">
+    <value>غير صالح</value>
+  </data>
+  <data name="FailedDelete" xml:space="preserve">
+    <value>فشل فى عمليه الحذف</value>
+  </data>
+  <data name="FailedUpdate" xml:space="preserve">
+    <value>فشل فى عمليه التعديل</value>
+  </data>
+  <data name="uppercase" xml:space="preserve">
+    <value>يجب ان تحتوى على حروف كبيره</value>
+  </data>
+  <data name="lowercase" xml:space="preserve">
+    <value>يجب ان تحتوى على حروف صغيره</value>
+  </data>
+  <data name="digit" xml:space="preserve">
+    <value>يجب ان تحتوى على أرقام</value>
+  </data>
+  <data name="specialchar" xml:space="preserve">
+    <value>يجب انت تحتوى على حرف خاص</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>تأكيد كلمه السر</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>الرقم السرى</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>الإميل</value>
+  </data>
+  <data name="ChangePass" xml:space="preserve">
+    <value>تم تغيير كلمة السر بنجاح</value>
+  </data>
 </root>

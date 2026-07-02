@@ -21,5 +21,12 @@ namespace SchoolProject.Core.Localization
         public const string IsNotExist = "IsNotExist";
         public const string EmailExist = "EmailExist";
         public const string PCNotEqual = "PCNotEqual";
+        public const string FailedDelete = "FailedDelete";
+        public const string FailedUpdate = "FailedUpdate";
+        public const string uppercase = "uppercase";
+        public const string lowercase = "lowercase";
+        public const string digit = "digit";
+        public const string specialchar = "specialchar";
+        public const string ChangePass = "ChangePass";
     }
 }
