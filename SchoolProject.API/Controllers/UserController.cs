@@ -63,6 +63,27 @@ namespace SchoolProject.API.Controllers
             var response = await mediator.Send(model);
             return NewResult(response);
         }
+        [HttpPut(Router.UserRouting.LockUser)]
+        [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Response<string>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Response<string>>> LockUser([FromRoute] string id)
+        {
+                      
+            var response = await mediator.Send(new LockUserCommand(id));
+            return NewResult(response);
+        }
+        [HttpPut(Router.UserRouting.UnLockUser)]
+        [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Response<string>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Response<string>>> UnLockUser([FromRoute] string id)
+        {
+                      
+            var response = await mediator.Send(new UnLockUserCommand(id));
+            return NewResult(response);
+        }
+       
 
 
         [HttpDelete(Router.UserRouting.Delete)]

@@ -213,4 +213,10 @@
   <data name="ChangePass" xml:space="preserve">
     <value>Change Password Done Successfully</value>
   </data>
+  <data name="UserUnLocked" xml:space="preserve">
+    <value>User UnLocked Successfully</value>
+  </data>
+  <data name="UserLocked" xml:space="preserve">
+    <value>User Locked Successfully</value>
+  </data>
 </root>

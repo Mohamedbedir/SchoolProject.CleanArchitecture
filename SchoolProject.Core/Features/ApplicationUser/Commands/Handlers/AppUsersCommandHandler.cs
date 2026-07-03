@@ -17,7 +17,9 @@ namespace SchoolProject.Core.Features.ApplicationUser.Commands.Handlers
         IRequestHandler<AddAppUserCommand,Response<string>>,
         IRequestHandler<EditAppUserCommand,Response<string>>,
         IRequestHandler<DeleteAppUserCommand,Response<string>>,
-        IRequestHandler<ChangeUserPasswordCommand, Response<string>>
+        IRequestHandler<ChangeUserPasswordCommand, Response<string>>,
+        IRequestHandler<LockUserCommand,Response<string>>,
+        IRequestHandler<UnLockUserCommand, Response<string>>
     {
         private readonly IStringLocalizer<SharedResources> localizer;
         private readonly UserManager<AppUser> userManager;
@@ -107,6 +109,38 @@ namespace SchoolProject.Core.Features.ApplicationUser.Commands.Handlers
                 return BadRequest<string>(Erorrs);
             }
             return Success("",Message: localizer[SharedResourcesKeys.ChangePass]);
+        }
+
+        public async Task<Response<string>> Handle(LockUserCommand request, CancellationToken cancellationToken)
+        {
+            var user = await userManager.FindByIdAsync(request.Id);
+            if (user == null)
+                return NotFound<string>();
+            var res = await userManager.SetLockoutEndDateAsync(user,DateTimeOffset.Now.AddHours(5));
+            if (!res.Succeeded)
+            {
+                var errors = string.Join(Environment.NewLine,
+                                         res.Errors.Select(e => e.Description));
+
+                return BadRequest<string>(errors);
+            }
+            return Success<string>("",Message: localizer[SharedResourcesKeys.UserLocked]);
+        }
+
+        public async Task<Response<string>> Handle(UnLockUserCommand request, CancellationToken cancellationToken)
+        {
+            var user = await userManager.FindByIdAsync(request.Id);
+            if (user == null)
+                return NotFound<string>();
+            var res = await userManager.SetLockoutEndDateAsync(user,null);
+            if (!res.Succeeded)
+            {
+                var errors = string.Join(Environment.NewLine,
+                                         res.Errors.Select(e => e.Description));
+
+                return BadRequest<string>(errors);
+            }
+            return Success<string>("", Message: localizer[SharedResourcesKeys.UserUnLocked]);
         }
     }
 }
