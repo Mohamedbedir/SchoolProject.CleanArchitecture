@@ -28,5 +28,7 @@ namespace SchoolProject.Core.Localization
         public const string digit = "digit";
         public const string specialchar = "specialchar";
         public const string ChangePass = "ChangePass";
+        public const string UserLocked = "UserLocked";
+        public const string UserUnLocked = "UserUnLocked";
     }
 }
