@@ -53,5 +53,18 @@ namespace SchoolProject.Data.AppMetaData
             public const string UnLockUser = Prefix + "/UnLock-User" + "/{id}";
             public const string Delete = Prefix + "/Delete"+ "/{id}";
         }
+        public static class AccountRouting
+        {
+            public const string Prefix = Rule+ "Account";
+            public const string List = Prefix+"/List";
+            public const string SignIn = Prefix + "/SignIn";
+            public const string ById = Prefix + "/ById"+ "/{id}";
+            public const string Create = Prefix + "/Create";
+            public const string Update = Prefix + "/Update";
+            public const string ChangePassword = Prefix + "/Change-Password";
+            public const string LockUser = Prefix + "/Lock-User" + "/{id}";
+            public const string UnLockUser = Prefix + "/UnLock-User" + "/{id}";
+            public const string Delete = Prefix + "/Delete"+ "/{id}";
+        }
     }
 }

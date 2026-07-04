@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ using SchoolProject.Data.Entities;
 
 namespace SchoolProject.API.Controllers
 {
+    [Authorize]
     //[Route("api/[controller]")]
     [ApiController]
     public class StudentController : AppControllerBase
