@@ -5,6 +5,7 @@ using SchoolProject.Core.Bases;
 using SchoolProject.Core.Features.Accounts.Commands.Models;
 using SchoolProject.Core.Localization;
 using SchoolProject.Data.Entities.Identity;
+using SchoolProject.Data.Helpers;
 using SchoolProject.Service.Services.Contract;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,8 @@ using System.Threading.Tasks;
 namespace SchoolProject.Core.Features.Accounts.Commands.Handlars
 {
     public class AccountCommandHandler : ResponseHandler,
-        IRequestHandler<SignInCommand, Response<string>>
+        IRequestHandler<SignInCommand, Response<JwtTokenResponse>>,
+        IRequestHandler<RefreshTokenCommand, Response<JwtTokenResponse>>
     {
         private readonly IStringLocalizer<SharedResources> localizer;
         private readonly UserManager<AppUser> userManager;
@@ -32,17 +34,23 @@ namespace SchoolProject.Core.Features.Accounts.Commands.Handlars
             this.signInManager = signInManager;
             this.authService = authService;
         }
-        public async Task<Response<string>> Handle(SignInCommand request, CancellationToken cancellationToken)
+        public async Task<Response<JwtTokenResponse>> Handle(SignInCommand request, CancellationToken cancellationToken)
         {
             var user = await userManager.FindByEmailAsync(request.Email);
             if (user == null)
-                return BadRequest<string>("Invalid Login Your Email Or Password Is Wrong");
+                return BadRequest<JwtTokenResponse>("Invalid Login Your Email Or Password Is Wrong");
             var res = await signInManager.CheckPasswordSignInAsync(user, request.Password, false);
             if (!res.Succeeded)
             {               
-                return BadRequest<string>("Invalid Login Your Email Or Password Is Wrong");
+                return BadRequest<JwtTokenResponse>("Invalid Login Your Email Or Password Is Wrong");
             }
-            return Success<string>(await authService.GenerateJwtToken(user), Message: "Login Successfully");
+            return Success<JwtTokenResponse>(await authService.GetJwtToken(user), Message: "Login Successfully");
+        }
+
+        async Task<Response<JwtTokenResponse>> IRequestHandler<RefreshTokenCommand, Response<JwtTokenResponse>>.Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+        {
+            var res = await authService.GetRefreshToken(request.AccessToken, request.RefreshToken);
+            return Success(res);
         }
     }
 }

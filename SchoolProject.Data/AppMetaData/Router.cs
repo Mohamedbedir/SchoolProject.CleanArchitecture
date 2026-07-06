@@ -58,6 +58,8 @@ namespace SchoolProject.Data.AppMetaData
             public const string Prefix = Rule+ "Account";
             public const string List = Prefix+"/List";
             public const string SignIn = Prefix + "/SignIn";
+            public const string RefreshToken = Prefix + "/Refresh-Token";
+            public const string ValidateToken = Prefix + "/Validate-Token";
             public const string ById = Prefix + "/ById"+ "/{id}";
             public const string Create = Prefix + "/Create";
             public const string Update = Prefix + "/Update";

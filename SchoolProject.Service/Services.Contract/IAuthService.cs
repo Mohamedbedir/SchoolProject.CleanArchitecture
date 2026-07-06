@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using SchoolProject.Data.Entities.Identity;
+using SchoolProject.Data.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,8 @@ namespace SchoolProject.Service.Services.Contract
 {
     public interface IAuthService
     {
-        Task<string> GenerateJwtToken(AppUser user);
+        Task<JwtTokenResponse> GetJwtToken(AppUser user);
+        Task<JwtTokenResponse> GetRefreshToken(string accesstoken,string refreshtoken);
+        Task<string> ValidateToken(string accesstoken);
     }
 }

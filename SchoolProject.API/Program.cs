@@ -164,6 +164,7 @@ builder.Services.AddScoped<IStudentRepo, StudentRepo>();
 builder.Services.AddScoped<ISubjectRepo, SubjectRepo>();
 builder.Services.AddScoped<IDepartmentRepo, DepartmentRepo>();
 builder.Services.AddScoped<IInstructorRepo, InstructorRepo>();
+builder.Services.AddScoped<IUserRefreshTokenRepo, UserRefreshTokenRepo>();
 
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
