@@ -1,11 +1,16 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using SchoolProject.Core.Behaviors;
+using SchoolProject.Core.Features.Accounts.Commands.Handlars;
+using SchoolProject.Core.Features.Accounts.Commands.Validators;
 using SchoolProject.Core.Features.ApplicationUser.Commands.Handlers;
 using SchoolProject.Core.Features.ApplicationUser.Commands.Validators;
 using SchoolProject.Core.Features.ApplicationUser.Queries.Handlers;
@@ -24,6 +29,7 @@ using SchoolProject.Core.Mapping.Subjects;
 using SchoolProject.Core.Middlewares;
 using SchoolProject.Data.Entities;
 using SchoolProject.Data.Entities.Identity;
+using SchoolProject.Data.Helpers;
 using SchoolProject.Infrastructure.Data;
 using SchoolProject.Infrastructure.Repos;
 using SchoolProject.Infrastructure.Repos.Contract;
@@ -31,6 +37,7 @@ using SchoolProject.Service.Services;
 using SchoolProject.Service.Services.Contract;
 using System.Globalization;
 using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,7 +46,41 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "School Project API",
+        Version = "v1"
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter JWT Token.\nExample: Bearer eyJhbGciOiJIUzI1NiIs..."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 
 //Connection Sql
 builder.Services.AddDbContext<SchoolDbContext>(options =>
@@ -58,7 +99,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequiredLength = 8;
     options.Password.RequiredUniqueChars = 1;
-    
+
     // Lockout settings.
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     options.Lockout.MaxFailedAccessAttempts = 5;
@@ -69,8 +110,51 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
     options.User.RequireUniqueEmail = false;
 
-}).AddEntityFrameworkStores<SchoolDbContext>()
-.AddDefaultTokenProviders();
+}).AddEntityFrameworkStores<SchoolDbContext>();
+//.AddDefaultTokenProviders();
+
+#endregion
+#region Add Authentication JWT Breare
+
+var jwtSettings = builder.Configuration
+    .GetSection("JwtSettings")
+    .Get<JwtSettings>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.SaveToken = true;
+    options.RequireHttpsMetadata = false;
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("JwtSettings"));
+
+builder.Services.AddSingleton(sp =>
+{
+    return sp.GetRequiredService<IOptions<JwtSettings>>().Value;
+});
 
 #endregion
 #region DI
@@ -80,10 +164,12 @@ builder.Services.AddScoped<IStudentRepo, StudentRepo>();
 builder.Services.AddScoped<ISubjectRepo, SubjectRepo>();
 builder.Services.AddScoped<IDepartmentRepo, DepartmentRepo>();
 builder.Services.AddScoped<IInstructorRepo, InstructorRepo>();
+builder.Services.AddScoped<IUserRefreshTokenRepo, UserRefreshTokenRepo>();
 
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddAutoMapper(m => m.AddProfile(new StudentProfile()));
 builder.Services.AddAutoMapper(m => m.AddProfile(new SubjectProfile()));
@@ -105,6 +191,8 @@ builder.Services.AddMediatR(cfg =>
         typeof(AppUsersCommandHandler).Assembly);
     cfg.RegisterServicesFromAssembly(
         typeof(AppUsersQueryHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(
+        typeof(AccountCommandHandler).Assembly);
 });
 //builder.Services.AddMediatR(c=>c.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
 // DI For Validations
@@ -117,6 +205,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<UpdateSubjectValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AddAppUserValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<EditAppUserValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<ChangeUserPasswordValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<SignInValidator>();
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 #endregion
@@ -145,13 +234,14 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Policy1",
-                          policy =>
-                          {
-                              policy.WithOrigins("http://example.com",
-                                                  "http://www.contoso.com")
-                                                  .AllowAnyHeader()
-                                                  .AllowAnyMethod();
-                          });
+          policy =>
+          {
+              policy.WithOrigins("http://example.com",
+                                  "http://www.contoso.com")
+                                  .AllowAnyHeader()
+                                  .AllowAnyMethod();
+          });
+
 });
 
 #endregion
@@ -193,7 +283,7 @@ app.UseHttpsRedirection();
 
 app.UseCors("Policy1");
 
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
