@@ -32,10 +32,10 @@ namespace SchoolProject.API.Controllers
             return NewResult(response);
         }
         [HttpGet(Router.AccountRouting.ValidateToken)]
-        [ProducesResponseType(typeof(Response<JwtTokenResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
         //[ProducesResponseType(typeof(Response<JwtTokenResponse>), StatusCodes.Status422UnprocessableEntity)]
-        //[ProducesResponseType(typeof(Response<JwtTokenResponse>), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Response<JwtTokenResponse>>> ValidateToken([FromBody] GetValidatorQuery model)
+        [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Response<string>>> ValidateToken([FromQuery] GetValidatorQuery model)
         {
             var response = await mediator.Send(model);
             return NewResult(response);
