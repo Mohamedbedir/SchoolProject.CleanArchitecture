@@ -25,6 +25,8 @@ namespace SchoolProject.API.Controllers
         //{
         //    this.mediator = mediator;
         //}
+        [Authorize(Roles = "User,Admin")]
+
         [HttpGet(Router.StudentRouting.List)]
         [ProducesResponseType(typeof(Response<IReadOnlyList<GetStudentsResponse>>), StatusCodes.Status200OK)]
         public async Task<ActionResult<Response<IReadOnlyList<GetStudentsResponse>>>> GetAllStudent()
@@ -32,6 +34,8 @@ namespace SchoolProject.API.Controllers
             var response=await mediator.Send(new GetStudentsQuery());
             return NewResult(response);    
         }
+        [Authorize(Roles = "User,Admin")]
+
         [HttpGet(Router.StudentRouting.Paginated)]
         [ProducesResponseType(typeof(PaginatedResult<GetStudentsResponse>), StatusCodes.Status200OK)]
         public async Task<ActionResult<Response<IReadOnlyList<GetStudentsResponse>>>>
@@ -40,6 +44,8 @@ namespace SchoolProject.API.Controllers
             var response=await mediator.Send(pagination);
             return Ok(response);    
         }
+        [Authorize(Roles = "User,Admin")]
+
         [HttpGet(Router.StudentRouting.ById)]
         [ProducesResponseType(typeof(Response<GetStudentByIdResponse>),StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(NotFound<GetStudentByIdResponse>),StatusCodes.Status404NotFound)]
@@ -48,6 +54,7 @@ namespace SchoolProject.API.Controllers
             var response=await mediator.Send(new GetStudentByIdQuery(id));
             return NewResult(response);    
         }
+        [Authorize(Roles = "Admin")]
         [HttpPost(Router.StudentRouting.Create)]
         [ProducesResponseType(typeof(Response<string>),StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Response<string>),StatusCodes.Status422UnprocessableEntity)]
@@ -57,6 +64,8 @@ namespace SchoolProject.API.Controllers
             var response=await mediator.Send(model);
             return NewResult(response);    
         }
+        [Authorize(Roles = "Admin")]
+        [Authorize(Policy= "CreateStudent")]
         [HttpPut(Router.StudentRouting.Update)]
         [ProducesResponseType(typeof(Response<string>),StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Response<string>),StatusCodes.Status404NotFound)]
@@ -66,6 +75,7 @@ namespace SchoolProject.API.Controllers
             var response=await mediator.Send(model);
             return NewResult(response);    
         }
+        [Authorize(Roles = "Admin")]
         [HttpDelete(Router.StudentRouting.Delete)]
         [ProducesResponseType(typeof(Response<string>),StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Response<string>),StatusCodes.Status404NotFound)]

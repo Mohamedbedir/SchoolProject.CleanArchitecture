@@ -48,6 +48,14 @@ namespace SchoolProject.Core.Features.ApplicationUser.Commands.Handlers
             };
 
             var res = await userManager.CreateAsync(usermapped, request.Password);
+            if ( userManager.Users.Any())
+            {
+                await userManager.AddToRoleAsync(usermapped, "User");
+            }
+            else
+            {
+                await userManager.AddToRoleAsync(usermapped, "Admin");
+            }
 
             if (!res.Succeeded)
             {

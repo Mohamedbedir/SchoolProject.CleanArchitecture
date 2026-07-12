@@ -30,5 +30,6 @@ namespace SchoolProject.Core.Localization
         public const string ChangePass = "ChangePass";
         public const string UserLocked = "UserLocked";
         public const string UserUnLocked = "UserUnLocked";
+        public const string RoleExist = "RoleExist";
     }
 }
