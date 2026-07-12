@@ -219,4 +219,7 @@
   <data name="UserLocked" xml:space="preserve">
     <value>User Locked Successfully</value>
   </data>
+  <data name="RoleExist" xml:space="preserve">
+    <value>This Role is Exist</value>
+  </data>
 </root>

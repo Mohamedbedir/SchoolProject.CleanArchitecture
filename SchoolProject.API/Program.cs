@@ -11,6 +11,9 @@ using Microsoft.OpenApi.Models;
 using SchoolProject.Core.Behaviors;
 using SchoolProject.Core.Features.Accounts.Commands.Handlars;
 using SchoolProject.Core.Features.Accounts.Commands.Validators;
+using SchoolProject.Core.Features.ApplicationRoles.Commands.Handlers;
+using SchoolProject.Core.Features.ApplicationRoles.Commands.Validators;
+using SchoolProject.Core.Features.ApplicationRoles.Queries.Handlers;
 using SchoolProject.Core.Features.ApplicationUser.Commands.Handlers;
 using SchoolProject.Core.Features.ApplicationUser.Commands.Validators;
 using SchoolProject.Core.Features.ApplicationUser.Queries.Handlers;
@@ -23,6 +26,7 @@ using SchoolProject.Core.Features.Subjects.Command.Handlers;
 using SchoolProject.Core.Features.Subjects.Command.Validators;
 using SchoolProject.Core.Features.Subjects.Query.Handlers;
 using SchoolProject.Core.Mapping.ApplicationUser;
+using SchoolProject.Core.Mapping.AppRoles;
 using SchoolProject.Core.Mapping.Departments;
 using SchoolProject.Core.Mapping.Students;
 using SchoolProject.Core.Mapping.Subjects;
@@ -33,6 +37,7 @@ using SchoolProject.Data.Helpers;
 using SchoolProject.Infrastructure.Data;
 using SchoolProject.Infrastructure.Repos;
 using SchoolProject.Infrastructure.Repos.Contract;
+using SchoolProject.Infrastructure.Seeder;
 using SchoolProject.Service.Services;
 using SchoolProject.Service.Services.Contract;
 using System.Globalization;
@@ -156,6 +161,14 @@ builder.Services.AddSingleton(sp =>
     return sp.GetRequiredService<IOptions<JwtSettings>>().Value;
 });
 
+builder.Services.AddAuthorization(option =>
+{
+    option.AddPolicy("CreateStudent", option =>
+    {
+        option.RequireClaim("Create Student", "True");
+    });
+});
+
 #endregion
 #region DI
 //builder.Services.AddScoped(typeof(IGenericRepos<>), typeof(GenericRepos<>));
@@ -175,24 +188,34 @@ builder.Services.AddAutoMapper(m => m.AddProfile(new StudentProfile()));
 builder.Services.AddAutoMapper(m => m.AddProfile(new SubjectProfile()));
 builder.Services.AddAutoMapper(m => m.AddProfile(new DepartmentProfile()));
 builder.Services.AddAutoMapper(m => m.AddProfile(new AppUserProfile()));
+builder.Services.AddAutoMapper(m => m.AddProfile(new RoleProfile()));
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(
         typeof(StudentsQueryHandler).Assembly); 
     cfg.RegisterServicesFromAssembly(
         typeof(StudentsCommandHandler).Assembly); 
+
     cfg.RegisterServicesFromAssembly(
         typeof(SubjectsQueryHandler).Assembly);
     cfg.RegisterServicesFromAssembly(
         typeof(SubjectsCommandHandler).Assembly);
+
     cfg.RegisterServicesFromAssembly(
         typeof(DepartmentQueryHandler).Assembly);
+
     cfg.RegisterServicesFromAssembly(
         typeof(AppUsersCommandHandler).Assembly);
     cfg.RegisterServicesFromAssembly(
         typeof(AppUsersQueryHandler).Assembly);
+
     cfg.RegisterServicesFromAssembly(
         typeof(AccountCommandHandler).Assembly);
+
+    cfg.RegisterServicesFromAssembly(
+        typeof(RolesCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(
+        typeof(RolesQueryHandler).Assembly);
 });
 //builder.Services.AddMediatR(c=>c.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
 // DI For Validations
@@ -206,6 +229,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<AddAppUserValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<EditAppUserValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<ChangeUserPasswordValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<SignInValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<AddRoleValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<EditRoleValidator>();
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 #endregion
@@ -253,11 +278,15 @@ var app = builder.Build();
 using var scope=app.Services.CreateScope();
 var service= scope.ServiceProvider;
 var dbContext=service.GetRequiredService<SchoolDbContext>();
+var usermanger=service.GetRequiredService<UserManager<AppUser>>();
+var rolemanger=service.GetRequiredService<RoleManager<IdentityRole>>();
 var LoggerFactory = service.GetRequiredService<ILoggerFactory>();
 
 try
 {
     await dbContext.Database.MigrateAsync();
+    await DataSeeder.SeedRoles(rolemanger);
+    await DataSeeder.SeedUsers(usermanger);
 }
 catch(Exception ex)
 {

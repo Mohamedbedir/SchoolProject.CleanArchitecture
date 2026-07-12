@@ -17,6 +17,7 @@ using System.Security.Claims;
 namespace SchoolProject.API.Controllers
 {
     [ApiController]
+    [Authorize(Roles ="Admin")]
     public class UserController : AppControllerBase
     {
         [HttpGet(Router.UserRouting.Paginated)]

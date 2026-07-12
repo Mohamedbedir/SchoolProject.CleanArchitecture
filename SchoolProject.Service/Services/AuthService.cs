@@ -104,6 +104,8 @@ namespace SchoolProject.Service.Services
             {
                 Claims.Add(new Claim(ClaimTypes.Role, role));
             }
+            var UserClaims = await userManager.GetClaimsAsync(user);
+            Claims.AddRange(UserClaims);
 
             var SecretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret));
 
