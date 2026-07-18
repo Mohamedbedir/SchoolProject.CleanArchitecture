@@ -1,10 +1,15 @@
 ﻿using Azure.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Org.BouncyCastle.Asn1.Ocsp;
 using SchoolProject.Data.Entities.Identity;
 using SchoolProject.Data.Helpers;
+using SchoolProject.Infrastructure.Data;
 using SchoolProject.Infrastructure.Repos.Contract;
 using SchoolProject.Service.Services.Contract;
 using System;
@@ -24,15 +29,24 @@ namespace SchoolProject.Service.Services
         private readonly JwtSettings jwtSettings;
         private readonly UserManager<AppUser> userManager;
         private readonly IUserRefreshTokenRepo userRefreshTokenRepo;
+        private readonly SchoolDbContext context;
+        private readonly IEmailService emailService;
+        private readonly IHttpContextAccessor httpContextAccessor;
         private readonly ConcurrentDictionary<string,RefreshToken> Userrefreshtoken;
 
         public AuthService(JwtSettings jwtSettings, 
             UserManager<AppUser> userManager,
-            IUserRefreshTokenRepo userRefreshTokenRepo)
+            IUserRefreshTokenRepo userRefreshTokenRepo ,
+            SchoolDbContext context ,
+            IEmailService emailService , 
+            IHttpContextAccessor httpContextAccessor)
         {
             this.jwtSettings = jwtSettings;
             this.userManager = userManager;
             this.userRefreshTokenRepo = userRefreshTokenRepo;
+            this.context = context;
+            this.emailService = emailService;
+            this.httpContextAccessor = httpContextAccessor;
             Userrefreshtoken = new ConcurrentDictionary<string, RefreshToken>();
         }
         
@@ -207,6 +221,246 @@ namespace SchoolProject.Service.Services
             {
                 return ex.Message;
             }
+        }
+
+        public async Task<string> SendResetPasswordCode(string email)
+        {
+            var trans = await context.Database.BeginTransactionAsync();
+            try
+            {
+                var user=await userManager.FindByEmailAsync(email);
+                if (user == null)
+                    return "UserNotFound";
+                var generator = new Random();
+                var rondomNumber = generator.Next(0, 1000000).ToString("D6");
+                user.Code = rondomNumber;
+                var res=await userManager.UpdateAsync(user);
+                if (!res.Succeeded)
+                    return "ErrorInUpdateUser";
+                var message = $"This Code To Reset Password : {user.Code}";
+                var SendEmail = await emailService.SendEmailAsync(email, message, "Reset Password");
+                await trans.CommitAsync();
+                return "Success";
+            }
+            catch (Exception ex)
+            {
+                await trans.RollbackAsync();
+                var error = ex.InnerException?.Message;
+                return "Failed";
+            }
+        }
+
+        public async Task<string> ConfirmResetPassword(string email, string code)
+        {
+            var user=await userManager.FindByEmailAsync(email);
+            if (user == null)
+                return "UserNotFound";
+            if (user.Code == code)
+                return "Success";
+            return "Failed";
+        }
+        public async Task<string> ResetPassword(string email, string password)
+        {
+            var trans = await context.Database.BeginTransactionAsync();
+            try
+            {
+                var user = await userManager.FindByEmailAsync(email);
+                if (user == null)
+                    return "UserNotFound";
+                await userManager.RemovePasswordAsync(user);
+                await userManager.AddPasswordAsync(user, password);
+                await trans.CommitAsync();
+                return "Success";
+            }
+            catch (Exception ex)
+            {
+                await trans.RollbackAsync();
+                var error = ex.InnerException?.Message;
+                return "Failed";
+            }
+        }
+
+        public async Task<string> ResetPasswordLink(string userId, string password, string token)
+        {
+            // البحث عن المستخدم
+            var user = await userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return "UserNotFound";
+            var decodedCode = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+
+            // التحقق من التوكن وتغيير كلمة المرور
+            var result = await userManager.ResetPasswordAsync(user, decodedCode, password);
+
+            if (!result.Succeeded)
+            {
+                return string.Join(Environment.NewLine,
+                    result.Errors.Select(e => e.Description));
+            }
+
+            return "Success";
+        }
+
+        public async Task<string> SendResetPasswordLink(string email)
+        {
+            var trans = await context.Database.BeginTransactionAsync();
+            try
+            {
+                var user = await userManager.FindByEmailAsync(email);
+                if (user == null)
+                    return "UserNotFound";
+                var code = await userManager.GeneratePasswordResetTokenAsync(user);
+                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                var ContextAccessor = httpContextAccessor.HttpContext.Request;
+                var ReturnedUrl = ContextAccessor.Scheme + "://" + ContextAccessor.Host
+                    + $"/Api/v1/Account/ResetPasswordLink?userId={user.Id}&code={code}";
+                var message = $@"
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<style>
+    body {{
+        margin:0;
+        padding:0;
+        background:#f4f6f9;
+        font-family:Arial,Helvetica,sans-serif;
+    }}
+
+    .container {{
+        max-width:600px;
+        margin:40px auto;
+        background:#ffffff;
+        border-radius:12px;
+        overflow:hidden;
+        box-shadow:0 10px 30px rgba(0,0,0,.08);
+    }}
+
+    .header {{
+        background:#212529;
+        color:#fff;
+        text-align:center;
+        padding:30px;
+    }}
+
+    .header h1 {{
+        margin:0;
+        font-size:28px;
+    }}
+
+    .content {{
+        padding:40px;
+        color:#555;
+        line-height:1.8;
+        font-size:16px;
+    }}
+
+    .btn {{
+        display:inline-block;
+        margin:30px 0;
+        background:#0d6efd;
+        color:#fff !important;
+        text-decoration:none;
+        padding:15px 35px;
+        border-radius:8px;
+        font-weight:bold;
+    }}
+
+    .footer {{
+        background:#f8f9fa;
+        text-align:center;
+        padding:20px;
+        color:#888;
+        font-size:13px;
+    }}
+
+    .warning {{
+        color:#dc3545;
+        font-size:14px;
+        margin-top:25px;
+    }}
+</style>
+</head>
+
+<body>
+
+<div class='container'>
+
+    <div class='header'>
+        <h1>School System</h1>
+    </div>
+
+    <div class='content'>
+
+        <h2>Hello {user.FullName},</h2>
+
+        <p>
+            We received a request to reset your password.
+        </p>
+
+        <p>
+            Click the button below to create a new password.
+        </p>
+
+        <div style='text-align:center;'>
+
+            <a href='{ReturnedUrl}' class='btn'>
+                Reset Password
+            </a>
+
+        </div>
+
+        <p>
+            If the button doesn't work, copy and paste this link into your browser:
+        </p>
+
+        <p style='word-break:break-all;color:#0d6efd;'>
+            {ReturnedUrl}
+        </p>
+
+        <p class='warning'>
+            This link will expire soon. If you didn't request a password reset,
+            you can safely ignore this email.
+        </p>
+
+    </div>
+
+    <div class='footer'>
+
+        © 2026 School System<br/>
+        This is an automated email, please do not reply.
+
+    </div>
+
+</div>
+
+</body>
+</html>";
+                
+                var SendEmail = await emailService.SendEmailAsync(email, message, "Reset Password Link");
+                await trans.CommitAsync();
+                return "Success";
+            }
+            catch (Exception ex)
+            {
+                await trans.RollbackAsync();
+                return "Failed";
+            }
+        }
+
+        public async Task<AppUser> GetAppUser()
+        {
+            //var UserId = httpContextAccessor.HttpContext.User.Claims
+            //    .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+            var userId = httpContextAccessor.HttpContext?.User?
+                  .FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                throw new UnauthorizedAccessException("Unauthorized");
+            var user =await userManager.FindByIdAsync(userId);
+            if (user == null)
+                throw new UnauthorizedAccessException("Unauthorized");
+            return user;
         }
     }
 }

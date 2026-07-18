@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using EntityFrameworkCore.EncryptColumn.Extension;
+using EntityFrameworkCore.EncryptColumn.Interfaces;
+using EntityFrameworkCore.EncryptColumn.Util;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SchoolProject.Data.Entities;
 using SchoolProject.Data.Entities.Identity;
@@ -13,14 +16,15 @@ namespace SchoolProject.Infrastructure.Data
 {
     public class SchoolDbContext:IdentityDbContext<AppUser>
     {
+        private readonly IEncryptionProvider encryptionProvider;
         public SchoolDbContext(DbContextOptions<SchoolDbContext> options):base(options)
         {
-            
+            encryptionProvider = new GenerateEncryptionProvider("astringsecret256");
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
+            modelBuilder.UseEncryption(encryptionProvider);
             //modelBuilder.Entity<DepartmentSubject>(options =>
             //{
             //    options.HasKey(e => new { e.SubID, e.DID });

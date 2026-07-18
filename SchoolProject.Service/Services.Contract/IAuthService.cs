@@ -14,5 +14,11 @@ namespace SchoolProject.Service.Services.Contract
         Task<JwtTokenResponse> GetJwtToken(AppUser user);
         Task<JwtTokenResponse> GetRefreshToken(string accesstoken,string refreshtoken);
         Task<string> ValidateToken(string accesstoken);
+        Task<string> SendResetPasswordCode(string email);
+        Task<string> ConfirmResetPassword(string email,string code);
+        Task<string> ResetPassword(string email, string password);
+        Task<string> ResetPasswordLink(string userId, string password,string token);
+        Task<string> SendResetPasswordLink(string email);
+        Task<AppUser> GetAppUser();
     }
 }
