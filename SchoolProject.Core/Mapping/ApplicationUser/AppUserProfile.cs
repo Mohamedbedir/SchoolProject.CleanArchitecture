@@ -12,6 +12,7 @@ namespace SchoolProject.Core.Mapping.ApplicationUser
         public AppUserProfile()
         {
             GetUserByIdMapping();
+            GetCurrentUserMapping();
         }
     }
 }

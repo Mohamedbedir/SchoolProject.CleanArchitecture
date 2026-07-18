@@ -1,13 +1,17 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Localization;
 using SchoolProject.Core.Bases;
 using SchoolProject.Core.Features.ApplicationUser.Commands.Models;
 using SchoolProject.Core.Localization;
 using SchoolProject.Data.Entities.Identity;
+using SchoolProject.Service.Services.Contract;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,12 +27,18 @@ namespace SchoolProject.Core.Features.ApplicationUser.Commands.Handlers
     {
         private readonly IStringLocalizer<SharedResources> localizer;
         private readonly UserManager<AppUser> userManager;
+        private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IEmailService emailService;
 
         public AppUsersCommandHandler(IStringLocalizer<SharedResources> localizer
-            , UserManager<AppUser> userManager) :base(localizer)
+            , UserManager<AppUser> userManager
+            ,IHttpContextAccessor httpContextAccessor
+            ,IEmailService emailService) :base(localizer)
         {
             this.localizer = localizer;
             this.userManager = userManager;
+            this.httpContextAccessor = httpContextAccessor;
+            this.emailService = emailService;
         }
 
         public async Task<Response<string>> Handle(AddAppUserCommand request, CancellationToken cancellationToken)
@@ -48,15 +58,7 @@ namespace SchoolProject.Core.Features.ApplicationUser.Commands.Handlers
             };
 
             var res = await userManager.CreateAsync(usermapped, request.Password);
-            if ( userManager.Users.Any())
-            {
-                await userManager.AddToRoleAsync(usermapped, "User");
-            }
-            else
-            {
-                await userManager.AddToRoleAsync(usermapped, "Admin");
-            }
-
+            await userManager.AddToRoleAsync(usermapped, "User");
             if (!res.Succeeded)
             {
                 var errors = string.Join(Environment.NewLine,
@@ -64,6 +66,14 @@ namespace SchoolProject.Core.Features.ApplicationUser.Commands.Handlers
 
                 return BadRequest<string>(errors);
             }
+            var code = await userManager.GenerateEmailConfirmationTokenAsync(usermapped);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var ContextAccessor = httpContextAccessor.HttpContext.Request;
+            var ReturnedUrl = ContextAccessor.Scheme + "://" + ContextAccessor.Host
+                + $"/Api/v1/Account/ConfirmEmail?userId={usermapped.Id}&code={code}";
+            var sendConfirmMassage = await emailService.SendEmailAsync(usermapped.Email, ReturnedUrl,null);
+            if (sendConfirmMassage == "FailedToEmailSent")
+                return BadRequest<string>("Failed To Send ConfirmationEmail");
 
             return Created<string>("");
         }

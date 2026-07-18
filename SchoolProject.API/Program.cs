@@ -18,6 +18,8 @@ using SchoolProject.Core.Features.ApplicationUser.Commands.Handlers;
 using SchoolProject.Core.Features.ApplicationUser.Commands.Validators;
 using SchoolProject.Core.Features.ApplicationUser.Queries.Handlers;
 using SchoolProject.Core.Features.Departments.Queries.Handlers;
+using SchoolProject.Core.Features.Emails.Commands.Handlers;
+using SchoolProject.Core.Features.Emails.Commands.Validators;
 using SchoolProject.Core.Features.Students.Commands.Handlers;
 using SchoolProject.Core.Features.Students.Commands.Models;
 using SchoolProject.Core.Features.Students.Commands.Validators;
@@ -114,10 +116,15 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.User.AllowedUserNameCharacters =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
     options.User.RequireUniqueEmail = false;
+    options.SignIn.RequireConfirmedEmail = true;
 
-}).AddEntityFrameworkStores<SchoolDbContext>();
+}).AddEntityFrameworkStores<SchoolDbContext>().AddDefaultTokenProviders();
 //.AddDefaultTokenProviders();
-
+// configure time to token by tokenProvider
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromMinutes(2);
+});
 #endregion
 #region Add Authentication JWT Breare
 
@@ -168,8 +175,18 @@ builder.Services.AddAuthorization(option =>
         option.RequireClaim("Create Student", "True");
     });
 });
-
 #endregion
+
+#region MailSettings
+builder.Services.Configure<MailSettings>(
+    builder.Configuration.GetSection("MailSettings"));
+
+builder.Services.AddSingleton(sp =>
+{
+    return sp.GetRequiredService<IOptions<MailSettings>>().Value;
+});
+#endregion
+
 #region DI
 //builder.Services.AddScoped(typeof(IGenericRepos<>), typeof(GenericRepos<>));
 //builder.Services.AddScoped(typeof(IGenericRepos<Subject>), typeof(GenericRepos<Subject>));
@@ -183,6 +200,10 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+//builder.Services.AddScoped<IHttpContextAccessor, HttpContextAccessor>();
+
 
 builder.Services.AddAutoMapper(m => m.AddProfile(new StudentProfile()));
 builder.Services.AddAutoMapper(m => m.AddProfile(new SubjectProfile()));
@@ -216,6 +237,9 @@ builder.Services.AddMediatR(cfg =>
         typeof(RolesCommandHandler).Assembly);
     cfg.RegisterServicesFromAssembly(
         typeof(RolesQueryHandler).Assembly);
+
+    cfg.RegisterServicesFromAssembly(
+        typeof(EmailsCommandHandler).Assembly);
 });
 //builder.Services.AddMediatR(c=>c.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
 // DI For Validations
@@ -231,6 +255,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<ChangeUserPasswordValidator
 builder.Services.AddValidatorsFromAssemblyContaining<SignInValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AddRoleValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<EditRoleValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<SendEmailValidator>();
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 #endregion

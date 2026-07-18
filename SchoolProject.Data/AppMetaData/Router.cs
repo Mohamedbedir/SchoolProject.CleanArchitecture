@@ -40,6 +40,7 @@ namespace SchoolProject.Data.AppMetaData
             public const string Update = Prefix + "/Update";
             public const string Delete = Prefix + "/Delete"+ "/{id}";
         }
+        
         public static class UserRouting
         {
             public const string Prefix = Rule+ "User";
@@ -47,6 +48,7 @@ namespace SchoolProject.Data.AppMetaData
             public const string Paginated = Prefix + "/Paginated";
             public const string ById = Prefix + "/ById"+ "/{id}";
             public const string Create = Prefix + "/Create";
+            public const string CurrentUser = Prefix + "/CurrentUser";
             public const string Update = Prefix + "/Update";
             public const string ChangePassword = Prefix + "/Change-Password";
             public const string LockUser = Prefix + "/Lock-User" + "/{id}";
@@ -60,6 +62,12 @@ namespace SchoolProject.Data.AppMetaData
             public const string SignIn = Prefix + "/SignIn";
             public const string RefreshToken = Prefix + "/Refresh-Token";
             public const string ValidateToken = Prefix + "/Validate-Token";
+            public const string ConfirmEmail = Prefix + "/ConfirmEmail";
+            public const string SendResetPasswordCode = Prefix + "/SendResetPasswordCode";
+            public const string ConfirmResetPassword = Prefix + "/ConfirmResetPassword";
+            public const string SendResetPasswordLink = Prefix + "/SendResetPasswordLink";
+            public const string ResetPasswordLink = Prefix + "/ResetPasswordLink";
+            public const string ResetPassword = Prefix + "/ResetPassword";
             public const string ById = Prefix + "/ById"+ "/{id}";
             public const string Create = Prefix + "/Create";
             public const string Update = Prefix + "/Update";
@@ -79,6 +87,12 @@ namespace SchoolProject.Data.AppMetaData
             public const string Delete = Prefix + "/Delete"+ "/{id}";
             public const string ManageUserClaims = PrefixClaims + "/Manage-User-Claims" + "/{id}";
             public const string UpdateUserClaims = PrefixClaims + "/Update-User-Claims";
+        }
+        public static class EmailRouting
+        {
+            public const string Prefix = Rule + "Email";
+            public const string SendEmail = Prefix + "/SendEmail";
+          
         }
     }
 }
